@@ -1,0 +1,112 @@
+# MovieZone Telegram Bot
+
+## Overview
+
+MovieZone is a Telegram bot designed for movie discovery, sharing, and request management. It enables users to search for movies, browse by categories, request new content, and download movies via an ad-based link system. The bot incorporates a robust role-based access control system with distinct permissions for owners, administrators, and regular users. The project aims to provide a streamlined, user-friendly experience for movie enthusiasts while offering monetization opportunities through integrated advertising.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+All bot commands are available only through reply keyboard buttons.
+The hamburger menu is completely removed; during conversations, it is empty.
+The "❌ Cancel" button appears in the reply keyboard alongside other commands during conversations.
+The `/cancel` command is available via command box input.
+The bot should not make changes to the `BOT_TOKEN` in `config.py`.
+Updated category system with specific emoji icons and two special categories:
+- "All 🌐" for alphabet-based movie filtering (user types letter, bot shows movies starting with that letter)
+- "Hentai 💦" available only in admin movie addition interface, not in user browsing
+
+## System Architecture
+
+The application adopts a modular architecture, promoting separation of concerns and maintainability.
+
+### UI/UX Decisions
+- **Interaction Model**: Exclusively uses reply keyboard buttons for all user interactions, eliminating the hamburger menu for a cleaner interface.
+- **Cancel Mechanism**: A prominent "❌ Cancel" button is integrated into reply keyboards during conversations for consistent cancellation. The `/cancel` command is also supported via text input.
+- **Dynamic Command Menu**: The command menu (`/start`, `/help`) dynamically hides during ongoing conversations, showing only `/cancel`, and restores upon conversation completion.
+- **Category Browsing**: Movies within categories are displayed in a 3x10 grid format with pagination and easy navigation back to main categories. Grid layout ensures optimal viewing with up to 30 movies per page.
+- **Message Formatting**: Professional, structured layouts with emojis and clear information hierarchy are used consistently across all movie displays, search results, and welcome messages. All bold formatting is removed.
+- **Channel Message Filtering**: Bot only responds to search queries in private chats, preventing interference with channel posts made by admins/owners. Channel posts are ignored unless specifically posted through the bot's movie addition workflow.
+- **Admin/Channel Management**: Features like managing admins and channels are integrated into existing commands and accessed via dedicated buttons (e.g., "Manage Admins" includes "Add New Admin", "Remove an Admin"). Short names are used for easy identification in removal lists.
+
+### Technical Implementations
+- **Core Framework**: Built on the `python-telegram-bot` library.
+- **Configuration**: Centralized in `config.py` for environment variables, constants, and message templates.
+- **Data Storage**: Uses a JSON-based file system (`database.py`) for users, admins, movies, channels, requests, and tokens, ensuring easy backup and migration without external database dependencies.
+- **Handler Modules**: Organized handlers for specific functionalities (Start, Movie Search, Conversation, Callback, Owner actions) to ensure modularity.
+- **Utility Functions**: `utils.py` provides common functionalities like role-based access control (`@restricted` decorator), keyboard generation, movie post formatting, and ad link generation.
+- **Role-Based Access Control**: Strict permissions (Owner, Admin, User) are enforced via decorators and dynamic keyboard generation.
+- **Command Management**: Per-chat command scope management is used to control command visibility dynamically.
+- **Conversation Handling**: Multi-step conversations are managed with robust cancellation logic.
+- **Ad Integration**: Ad links are generated with secure tokens; users are redirected through an ad page before accessing content.
+
+### Feature Specifications
+- **User Registration**: Automatic registration on `/start` command with role-appropriate welcome messages. Welcome messages are shown only for new users to prevent repetitive messaging when accessing expired download links.
+- **Movie Search & Browse**: Users can search by query or browse categories with detailed movie information and download options.
+- **Movie Request System**: Users can submit movie requests, which admins can manage. Users are notified upon fulfillment.
+- **Admin & Owner Features**: Comprehensive management of users, movies, channels, and requests.
+- **Movie Management**: Owner role includes full movie lifecycle management with "➕ Add Movie", "🗑️ Remove Movie", and "📊 Show Stats" functionality accessible via reply keyboard buttons. Stats display shows uploader information (Owner/Admin short name) and accurate download counts.
+- **Skip Functionality**: Added skip buttons to movie addition process for release year, runtime, IMDb rating, categories, and languages to save time for admins/owners. Skip options use sensible defaults (N/A for metadata, General for category, English for language). Skipped fields (N/A values) are automatically hidden from preview and final posts to keep them clean.
+- **Dynamic Command Menu**: Contextual command menu adjustments based on conversation state.
+- **Automated Posting**: After preview, movies can be posted to multiple selected channels with validation checks.
+- **Message Cleanup**: Comprehensive automatic chat cleanup system with two-tier approach: (1) Step-by-step conversation cleanup during workflows to minimize chat length, (2) 24-hour scheduled deletion for user/admin/owner messages. Movie posts are preserved for regular users while all messages are cleaned for admins/owners.
+
+## External Dependencies
+
+- `python-telegram-bot`: Primary library for Telegram Bot API interaction.
+- `json`: Used for file-based data persistence.
+- `os`: For environment variable access and file system operations.
+- `logging`: For application logging and debugging.
+- `hashlib`: Used for token generation and security features.
+- `datetime`: For time-based operations and scheduling.
+- **GitHub Pages**: Potentially used for hosting the ad page (monetization system).
+
+## Recent Changes
+
+**Enhanced Stats System (August 6, 2025)**
+- Completely upgraded "📊 Show Stats" command with three search options:
+  - 🔍 Search by Movie Name: Type movie name to find statistics
+  - 📂 Search from Category: Browse movies by category in 3x10 grid layout
+  - 👤 Search by Admin Name: View movies uploaded by specific admin/owner
+- Added new database functions: get_movies_by_category(), get_movies_by_uploader(), get_all_admins()
+- Enhanced statistics display with detailed movie information and download counts
+- Improved conversation flow with proper state management and error handling
+- Post preview updated to remove category emojis and add "Title:" prefix to movie names
+
+**Ad Page Integration (August 6, 2025)**
+- Created complete ad page system with 10-second timer functionality (updated from 15 seconds)
+- Added auto-scroll and auto-continue features: page scrolls down after 3 seconds, continues to bot after another 3 seconds if user doesn't interact
+- Integrated secure token-based download system with external ad page hosting
+- Ad page files ready for separate hosting on GitHub Pages
+- Updated bot configuration to work with external ad page URL
+- Complete workflow: Bot → Ad Page → Timer → Auto-scroll → Return to Bot → File Download
+
+**Migration to Replit Environment - COMPLETED (August 7, 2025)**
+- Successfully completed migration from Replit Agent to standard Replit environment
+- All dependencies properly installed via packager tool (`python-telegram-bot[job-queue]==20.7`)
+- Bot successfully connecting to Telegram API and running without errors
+- JobQueue initialization working correctly for message cleanup functionality
+- All conversation handlers and workflows functioning properly
+- Hamburger menu disabled globally as per project requirements
+- Security best practices maintained with client/server separation
+- Bot fully operational and ready for production use with all features functional
+
+**Conversation Flow Improvements (August 6, 2025)**
+- Implemented message editing system across all conversation handlers to minimize chat clutter
+- Only final output messages remain visible, intermediate steps are edited in-place
+- Applied to: Show Stats, Manage Admins (Add/Remove), Manage Channels (Add/Remove), Movie Request
+- Removed confirmation steps for direct actions - admins/channels added immediately after name entry
+- Fixed skip button appearing after language selection (last step) - removed unnecessary skip option
+- Simplified instructional messages by removing redundant text about default values 
+- Enhanced user experience with cleaner, shorter conversations that focus on end results
+- All conversation handlers now store original message reference for consistent editing throughout workflow
+
+**Bug Fixes and UI Improvements (August 6, 2025)**
+- Fixed critical category browsing issue - movies now properly display when selecting categories
+- Updated movie display format to show "Title: Movie Name" instead of plain movie names
+- Removed Description field from search results as it was showing N/A values
+- Enhanced database category matching for exact category matches instead of substring matching
+- Improved file ID handling in token system for better download reliability
+- Added CSS styling to improve movie photo aspect ratios (wider, less tall appearance)
+- Fixed duplicate database function definitions causing category search failures
+- Enhanced error logging for category browsing to aid in debugging
