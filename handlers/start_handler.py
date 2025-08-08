@@ -63,66 +63,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                         )
                         return
                     
-                    # Show the movie with download option
-                    from utils import generate_ad_link_button
+                    # Show the movie with direct download option
+                    from utils import generate_direct_download_button
                     movie_title = movie_details.get('title', 'this movie')
                     
                     await context.bot.send_message(
                         chat_id=user.id,
-                        text=f"🍿 {movie_title}\n\nTo download in {quality}, you need to watch a short ad to support us."
+                        text=f"🍿 {movie_title}\n\nReady to download in {quality}?"
                     )
                     
-                    ad_link_markup = generate_ad_link_button(user_id=user.id, movie_id=movie_id, quality=quality)
-                    if ad_link_markup:
-                        await context.bot.send_message(
-                            chat_id=user.id,
-                            text="👇 Click the button below to proceed.",
-                            reply_markup=ad_link_markup
-                        )
-                    else:
-                        await context.bot.send_message(
-                            chat_id=user.id,
-                            text="❌ Sorry, something went wrong while generating the download link. Please try again."
-                        )
+                    download_markup = generate_direct_download_button(movie_id=movie_id, quality=quality)
+                    await context.bot.send_message(
+                        chat_id=user.id,
+                        text="👇 Click the button below to download directly.",
+                        reply_markup=download_markup
+                    )
                     return
                     
             except (ValueError, IndexError) as e:
                 logger.warning(f"Invalid file payload format: {payload}")
         
-        # If not a file link, try to validate as ad token from the ad page
-        file_id_to_send = db.validate_ad_token(token=payload, user_id=user.id)
-        
-        if file_id_to_send:
-            logger.info(f"Valid token. Sending file {file_id_to_send} to user {user.id}")
-            await context.bot.send_message(
-                chat_id=user.id,
-                text="✅ Your download is ready! Sending the file now..."
-            )
-            try:
-                # Try sending as video first (most movie files are videos)
-                try:
-                    await context.bot.send_video(chat_id=user.id, video=file_id_to_send)
-                    logger.info(f"Successfully sent video {file_id_to_send} to user {user.id}")
-                except Exception as video_error:
-                    logger.info(f"Failed to send as video, trying as document: {video_error}")
-                    # If video fails, try as document
-                    await context.bot.send_document(chat_id=user.id, document=file_id_to_send)
-                    logger.info(f"Successfully sent document {file_id_to_send} to user {user.id}")
-            except Exception as e:
-                logger.error(f"Failed to send file with ID {file_id_to_send} to user {user.id}. Error: {e}")
-                await context.bot.send_message(
-                    chat_id=user.id,
-                    text="❌ There was an error sending the file. Please try generating a new link."
-                )
-            return  # Stop further execution after sending the file
-        else:
-            # If neither file link nor valid token
-            logger.warning(f"Token not found: {payload}")
-            await context.bot.send_message(
-                chat_id=user.id,
-                text="⚠️ Sorry, this download link is invalid or has expired. Please generate a new one from the bot."
-            )
-            return  # Stop execution - don't show welcome message for expired links
+        # If not a direct file link, show invalid link message
+        logger.warning(f"Invalid download link format: {payload}")
+        await context.bot.send_message(
+            chat_id=user.id,
+            text="⚠️ Sorry, this download link is invalid. Please generate a new one from the bot."
+        )
+        return  # Stop execution - don't show welcome message for invalid links
 
     # Only show welcome message for completely new users or normal /start command without payload  
     user_role = db.get_user_role(user.id)

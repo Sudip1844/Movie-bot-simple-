@@ -4,18 +4,17 @@ import os
 
 # --- Telegram Bot Configuration ---
 # Your Telegram bot token from BotFather
-BOT_TOKEN = "7489158288:AAG3r41T8kG4O01BpBeICApd28p9g4DJJ4A"
+BOT_TOKEN = "7269265854:AAFYz0-nIJVQbNcJTE1tiW5Nz6Zk-MnGfFA"
 
 # আপনার বটের ইউজারনেম (t.me/YourBotUsername) - আপনার দেওয়া ছবি অনুযায়ী
-BOT_USERNAME = "MoviezoneDownloadbot"
+BOT_USERNAME = "movierecivebot"
 
 # --- Owner Configuration ---
 # বটের মালিকের টেলিগ্রাম ইউজার আইডি
 OWNER_ID = 5379553841
 
-# --- Ad Page Configuration ---
-# আপনার GitHub Pages-এ থাকা অ্যাড পেজের URL
-AD_PAGE_URL = "https://sudip1844.github.io/moviezone-redirect-page-"
+# --- Direct Download Configuration ---
+# Direct download system enabled - no ad page required
 
 # --- Bot Settings ---
 # মুভি যোগ করার সময় যে ক্যাটাগরিগুলো দেখানো হবে (আপনার ছবি অনুযায়ী)

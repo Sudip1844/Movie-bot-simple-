@@ -7,7 +7,7 @@ from telegram import (
     KeyboardButton,
     Update
 )
-from config import CATEGORIES, BOT_USERNAME, AD_PAGE_URL, SINGLE_MOVIE_POST_TEMPLATE, SERIES_POST_TEMPLATE
+from config import CATEGORIES, BOT_USERNAME, SINGLE_MOVIE_POST_TEMPLATE, SERIES_POST_TEMPLATE
 import database as db
 import logging
 from typing import List
@@ -125,17 +125,11 @@ def get_quality_buttons(movie_id: int, files: dict) -> InlineKeyboardMarkup:
     
     return InlineKeyboardMarkup(buttons)
 
-def generate_ad_link_button(user_id: int, movie_id: int, quality: str) -> InlineKeyboardMarkup | None:
-    """একটি 'Watch Ad & Download' বাটন তৈরি করে।"""
-    token = db.create_ad_token(user_id=user_id, movie_id=movie_id, quality=quality)
-    if not token:
-        logger.error(f"Failed to create ad token for user {user_id}, movie {movie_id}, quality {quality}")
-        return None
-        
-    # URL তৈরি করা হয়: https://your-page.com/?token=XYZ&uid=123
-    ad_url = f"{AD_PAGE_URL}?token={token}&uid={user_id}"
-    
-    button = [[InlineKeyboardButton("📺 Watch Ad & Download Now", url=ad_url)]]
+def generate_direct_download_button(movie_id: int, quality: str) -> InlineKeyboardMarkup:
+    """একটি 'Direct Download' বাটন তৈরি করে।"""
+    # Create direct download callback
+    callback_data = f"download_{movie_id}_{quality}"
+    button = [[InlineKeyboardButton("📥 Download Now", callback_data=callback_data)]]
     return InlineKeyboardMarkup(button)
 
 def format_movie_post(movie_details: dict, channel_username: str) -> str:

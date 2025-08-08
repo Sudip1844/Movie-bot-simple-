@@ -7,7 +7,7 @@ from telegram.constants import ParseMode
 from telegram.error import BadRequest
 
 import database as db
-from utils import generate_ad_link_button, get_quality_buttons
+from utils import generate_direct_download_button, get_quality_buttons
 
 # লগিং সেটআপ
 logger = logging.getLogger(__name__)
@@ -75,13 +75,56 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 return
 
             movie_title = movie_details.get('title', 'this movie')
-            await query.edit_message_text(f"To download {movie_title} in {quality}, you need to watch a short ad.")
+            await query.edit_message_text(f"📥 Download {movie_title} in {quality}")
             
-            ad_link_markup = generate_ad_link_button(user_id=user_id, movie_id=movie_id, quality=quality)
-            if ad_link_markup:
-                await query.message.reply_text("👇 Click the button below to proceed.", reply_markup=ad_link_markup)
+            download_markup = generate_direct_download_button(movie_id=movie_id, quality=quality)
+            await query.message.reply_text("👇 Click the button below to download directly.", reply_markup=download_markup)
+            
+        elif prefix == 'download':
+            # Handle direct download requests
+            movie_id, quality = int(parts[1]), '_'.join(parts[2:])
+            movie_details = db.get_movie_details(movie_id)
+            if not movie_details:
+                await query.edit_message_text("❌ Error: Movie not found. It might have been deleted.")
+                return
+                
+            files = movie_details.get('files', {})
+            if quality not in files:
+                await query.edit_message_text(f"❌ Quality {quality} not available for this movie.")
+                return
+                
+            file_info = files[quality]
+            # Handle different file storage formats
+            if isinstance(file_info, list) and len(file_info) > 0:
+                file_id = file_info[0]  # Take first file ID from list
+            elif isinstance(file_info, tuple):
+                file_id = file_info[0]  # Take first from tuple
             else:
-                await query.message.reply_text("❌ Sorry, something went wrong while generating the download link. Please try again.")
+                file_id = file_info  # Direct file ID
+                
+            # Send the file directly
+            movie_title = movie_details.get('title', 'Unknown')
+            await query.edit_message_text(f"📥 Sending {movie_title} ({quality})...")
+            
+            # Increment download count
+            db.increment_download_count(movie_id)
+            
+            try:
+                # Try sending as video first (most movie files are videos)
+                try:
+                    await context.bot.send_video(chat_id=user_id, video=file_id)
+                    logger.info(f"Successfully sent video {file_id} to user {user_id}")
+                except Exception as video_error:
+                    logger.info(f"Failed to send as video, trying as document: {video_error}")
+                    # If video fails, try as document
+                    await context.bot.send_document(chat_id=user_id, document=file_id)
+                    logger.info(f"Successfully sent document {file_id} to user {user_id}")
+                    
+                await query.message.reply_text("✅ File sent successfully!")
+                
+            except Exception as e:
+                logger.error(f"Failed to send file with ID {file_id} to user {user_id}. Error: {e}")
+                await query.message.reply_text("❌ There was an error sending the file. Please try again or contact support.")
 
         elif prefix == 'view':
             movie_id = int(parts[1])
