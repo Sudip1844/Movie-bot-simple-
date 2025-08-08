@@ -122,38 +122,27 @@ async def add_movie_start(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         'files': {} # { '480p': 'file_id_1', '720p': 'file_id_2' }
     }
     
-    # Initialize conversation message tracking for editing
-    context.user_data['current_step_message'] = None
-
-    sent_message = await update.message.reply_text(
+    await update.message.reply_text(
         "🎬 Add New Movie/Series\n\n"
         "Step 1: Please send the thumbnail for the movie (as a photo).\n\n"
         "To cancel at any time, press ❌ Cancel button.",
         reply_markup=keyboard
     )
     
-    # Track for cleanup
-    await auto_cleanup_message(update, context, sent_message)
     return GET_THUMBNAIL
 
 async def get_thumbnail(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """ থাম্বনেল সংগ্রহ করে এবং পরবর্তী ধাপে যায়। """
-    from utils_cleanup import ConversationCleanup, auto_cleanup_message
-    
-    # Clean up previous step
-    await ConversationCleanup.cleanup_previous_step(update, context)
     
     photo = update.message.photo[-1] # Best quality photo
     context.user_data['movie_data']['thumbnail_file_id'] = photo.file_id
     logger.info(f"User {update.effective_user.id} uploaded a thumbnail.")
 
-    sent_message = await update.message.reply_text("✅ Thumbnail saved.\n\nStep 2: Now, enter the movie title.")
-    await auto_cleanup_message(update, context, sent_message)
+    await update.message.reply_text("✅ Thumbnail saved.\n\nStep 2: Now, enter the movie title.")
     return GET_TITLE
 
 async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """ টাইটেল সংগ্রহ করে। """
-    from utils_cleanup import ConversationCleanup, auto_cleanup_message
     import database as db
     
     title = update.message.text
@@ -163,17 +152,11 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         title.lower() == 'cancel' or
         title == '❌ Cancel'):
         from utils import restore_main_keyboard
-        # Clean up all conversation messages before ending
-        await ConversationCleanup.cleanup_completed_conversation(update, context)
-        
         user_role = db.get_user_role(update.effective_user.id)
         keyboard = await restore_main_keyboard(update, context, user_role)
         await update.message.reply_text("❌ Movie addition cancelled.", reply_markup=keyboard)
         context.user_data.clear()
         return ConversationHandler.END
-
-    # Clean up previous step
-    await ConversationCleanup.cleanup_previous_step(update, context)
     
     context.user_data['movie_data']['title'] = title
     
@@ -184,11 +167,10 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     ]
     keyboard = ReplyKeyboardMarkup(skip_keyboard, resize_keyboard=True)
     
-    sent_message = await update.message.reply_text(
+    await update.message.reply_text(
         "✅ Title saved.\n\nStep 3: Enter the release year (e.g., 2023).\nOr press '⏭️ Skip Release Year' to use default (N/A).",
         reply_markup=keyboard
     )
-    await auto_cleanup_message(update, context, sent_message)
     return GET_RELEASE_YEAR
 
 async def get_release_year(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -458,9 +440,6 @@ async def all_files_done(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("⚠️ You haven't uploaded any files! Please upload at least one file or /cancel.")
         return UPLOAD_SINGLE_FILES if not movie_data.get('is_series') else UPLOAD_SERIES_FILES
 
-    # Clean up all conversation messages before showing final preview
-    await ConversationCleanup.cleanup_completed_conversation(update, context)
-    
     await update.message.reply_text("Great! All data collected. Generating preview...", reply_markup=ReplyKeyboardRemove())
 
     # Convert sets to lists for JSON serialization

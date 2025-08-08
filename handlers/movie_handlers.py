@@ -151,8 +151,7 @@ async def request_movie_start(update: Update, context: ContextTypes.DEFAULT_TYPE
     # Set conversation commands
     await set_conversation_commands(update, context)
     
-    sent_msg = await update.message.reply_text("🙏 Type movie name to request:", reply_markup=keyboard)
-    context.user_data['request_message'] = sent_msg
+    await update.message.reply_text("🙏 Type movie name to request:", reply_markup=keyboard)
     return REQUEST_MOVIE_NAME
 
 async def get_movie_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -171,7 +170,6 @@ async def get_movie_request(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     
     # Store the movie name for potential request
     context.user_data['requested_movie'] = movie_name
-    request_message = context.user_data.get('request_message')
     
     # First check if the movie already exists
     existing_movies = db.search_movies(movie_name, limit=3)
@@ -183,29 +181,14 @@ async def get_movie_request(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         buttons.append([InlineKeyboardButton("📝 Still Request Movie", callback_data=f"force_request")])
         
         message_text = f"🎬 Found {len(existing_movies)} similar movies. Still want to request?"
-        
-        if request_message:
-            try:
-                await request_message.edit_text(message_text, reply_markup=InlineKeyboardMarkup(buttons))
-            except:
-                await update.message.reply_html(message_text, reply_markup=InlineKeyboardMarkup(buttons))
-        else:
-            await update.message.reply_html(message_text, reply_markup=InlineKeyboardMarkup(buttons))
+        await update.message.reply_html(message_text, reply_markup=InlineKeyboardMarkup(buttons))
         return REQUEST_MOVIE_NAME
     else:
         # Movie not found, add to requests directly
         request_id = db.add_movie_request(user_id, movie_name)
         
-        # Show result in original message
         result_text = f"✅ Request submitted for '{movie_name}'\nRequest ID: {request_id}"
-        
-        if request_message:
-            try:
-                await request_message.edit_text(result_text)
-            except:
-                await update.message.reply_text(result_text)
-        else:
-            await update.message.reply_text(result_text)
+        await update.message.reply_text(result_text)
         
         from utils import restore_main_keyboard
         user_role = db.get_user_role(update.effective_user.id)
@@ -420,9 +403,6 @@ async def handle_stats_option(update: Update, context: ContextTypes.DEFAULT_TYPE
     query = update.callback_query
     await query.answer()
     
-    # Store the message for editing throughout the conversation
-    context.user_data['stats_message'] = query.message
-    
     if query.data == "stats_movie_name":
         await query.edit_message_text("🔍 Type movie name to see statistics:")
         return SHOW_STATS_MOVIE_NAME
@@ -538,43 +518,24 @@ async def get_movie_for_stats(update: Update, context: ContextTypes.DEFAULT_TYPE
         context.user_data.clear()
         return ConversationHandler.END
     
-    # Try to edit the original stats message instead of sending new one
-    stats_message = context.user_data.get('stats_message')
-    
     movies = db.search_movies(movie_name, limit=10)
     if not movies:
-        if stats_message:
-            try:
-                await stats_message.edit_text(f"❌ No movies found: '{movie_name}'\nTry again:")
-            except:
-                await update.message.reply_text(f"❌ No movies found: '{movie_name}'. Try again or /cancel.")
-        else:
-            await update.message.reply_text(f"❌ No movies found: '{movie_name}'. Try again or /cancel.")
+        await update.message.reply_text(f"❌ No movies found: '{movie_name}'. Try again or /cancel.")
         return SHOW_STATS_MOVIE_NAME
     
     if len(movies) == 1:
-        # Only one movie found, show stats in the original message
+        # Only one movie found, show stats directly
         movie = movies[0]
-        if stats_message:
-            await show_movie_stats_in_message(stats_message, context, movie)
-        else:
-            await show_movie_stats(update, context, movie)
+        await show_movie_stats(update, context, movie)
         return ConversationHandler.END
     else:
-        # Multiple movies found - edit original message
+        # Multiple movies found - show selection
         buttons = []
         for movie in movies:
             buttons.append([InlineKeyboardButton(f"📊 {movie.get('title', 'Unknown')}", callback_data=f"stats_{movie['movie_id']}")])
         
         message_text = f"🎬 Found {len(movies)} movies:"
-        
-        if stats_message:
-            try:
-                await stats_message.edit_text(message_text, reply_markup=InlineKeyboardMarkup(buttons))
-            except:
-                await update.message.reply_html(message_text, reply_markup=InlineKeyboardMarkup(buttons))
-        else:
-            await update.message.reply_html(message_text, reply_markup=InlineKeyboardMarkup(buttons))
+        await update.message.reply_html(message_text, reply_markup=InlineKeyboardMarkup(buttons))
         return SHOW_STATS_MOVIE_NAME
 
 async def show_movie_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, movie: dict):

@@ -115,6 +115,17 @@ The application adopts a modular architecture, promoting separation of concerns 
 - Conversation handlers now use simple message flow without complex editing patterns
 - Enhanced user experience with clear, straightforward conversations
 
+**API Cost Optimization - Conversation Simplification (August 8, 2025)**
+- Removed all unnecessary message editing patterns across conversation handlers to reduce Telegram API usage
+- Eliminated ConversationCleanup.cleanup_previous_step() calls from movie addition workflow
+- Simplified stats conversation by removing stats_message storage and editing system
+- Streamlined movie request conversation by removing request_message editing patterns
+- Removed auto_cleanup_message tracking system in movie addition process
+- All conversations now use simple reply-based flow instead of complex message editing
+- Significant reduction in Telegram API calls and token usage
+- Maintained full functionality while improving performance and reducing costs
+- Applied to: Movie Addition, Stats Display, Movie Requests, all conversation workflows
+
 **Bug Fixes and UI Improvements (August 6, 2025)**
 - Fixed critical category browsing issue - movies now properly display when selecting categories
 - Updated movie display format to show "Title: Movie Name" instead of plain movie names
