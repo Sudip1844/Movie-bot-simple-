@@ -343,23 +343,37 @@ def add_movie_request(user_id: int, movie_name: str) -> int:
     logger.info(f"Added new movie request: {request_id} - {movie_name} by user {user_id}")
     return request_id
 
-def get_pending_requests(limit: int = 10) -> List[Dict]:
-    """Get pending movie requests."""
+def get_pending_requests(limit: int = 10, offset: int = 0) -> List[Dict]:
+    """Get pending movie requests with pagination support."""
     requests = load_json(REQUESTS_FILE)
     users = load_json(USERS_FILE)
     
-    pending_requests = []
+    # Get all pending requests first
+    all_pending = []
     for request_data in requests["requests"].values():
         if request_data.get("status") == "pending":
             # Add user info
             user_id = request_data["user_id"]
             user_info = users.get(str(user_id), {})
             request_data["users"] = user_info
-            pending_requests.append(request_data)
-            if len(pending_requests) >= limit:
-                break
+            all_pending.append(request_data)
     
-    return pending_requests
+    # Sort by request ID (newest first)
+    all_pending.sort(key=lambda x: x.get("request_id", 0), reverse=True)
+    
+    # Apply offset and limit
+    start_index = offset
+    end_index = offset + limit
+    return all_pending[start_index:end_index]
+
+def get_total_pending_requests_count() -> int:
+    """Get total count of pending movie requests."""
+    requests = load_json(REQUESTS_FILE)
+    count = 0
+    for request_data in requests["requests"].values():
+        if request_data.get("status") == "pending":
+            count += 1
+    return count
 
 def update_request_status(request_id: int, status: str) -> Optional[Dict]:
     """Update the status of a movie request."""

@@ -224,20 +224,29 @@ async def force_request_movie(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 @restricted(allowed_roles=['owner', 'admin'])
 async def show_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show pending movie requests to admins/owners."""
-    pending_requests = db.get_pending_requests(limit=10)
+    """Show pending movie requests to admins/owners with pagination."""
+    page = context.user_data.get('requests_page', 1)
+    offset = (page - 1) * 5
+    
+    pending_requests = db.get_pending_requests(limit=5, offset=offset)
+    total_requests = db.get_total_pending_requests_count()
     
     if not pending_requests:
-        await update.message.reply_text("🎉 No pending movie requests at the moment!")
+        if page == 1:
+            await update.message.reply_text("🎉 No pending movie requests at the moment!")
+        else:
+            await update.message.reply_text("❌ No more requests to show.")
         return
     
-    await update.message.reply_text(f"📋 Found {len(pending_requests)} pending movie requests:\n")
+    # Show header with current page info
+    total_pages = (total_requests + 4) // 5  # Round up
+    await update.message.reply_text(f"📋 Showing {len(pending_requests)} movie requests (Page {page}/{total_pages}):\n")
     
     # Send each request as individual message
     for i, req in enumerate(pending_requests, 1):
         user_info = f"@{req['users'].get('username')}" if req['users'].get('username') else f"ID: {req['user_id']}"
         
-        message_text = f"Request #{i}: {req['movie_name']}\n"
+        message_text = f"Request #{offset + i}: {req['movie_name']}\n"
         message_text += f"👤 Requested by: {user_info}\n"
         message_text += f"🗓️ On: {req['requested_at'][:10]}"
         
@@ -252,6 +261,36 @@ async def show_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_text(
             message_text,
             reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    
+    # Add pagination controls at the end
+    nav_buttons = []
+    
+    # Previous button
+    if page > 1:
+        nav_buttons.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"requests_page_{page-1}"))
+    
+    # Next button
+    if len(pending_requests) == 5 and offset + 5 < total_requests:
+        nav_buttons.append(InlineKeyboardButton("Next ➡️", callback_data=f"requests_page_{page+1}"))
+    
+    # Cancel button
+    nav_buttons.append(InlineKeyboardButton("❌ Cancel", callback_data="requests_cancel"))
+    
+    if nav_buttons:
+        # Split into rows for better layout
+        button_rows = []
+        if len(nav_buttons) == 3:  # Previous, Next, Cancel
+            button_rows.append([nav_buttons[0], nav_buttons[1]])
+            button_rows.append([nav_buttons[2]])
+        elif len(nav_buttons) == 2:  # Two buttons (either prev+cancel or next+cancel)
+            button_rows.append(nav_buttons)
+        else:  # Only cancel
+            button_rows.append(nav_buttons)
+        
+        await update.message.reply_text(
+            "Navigation:",
+            reply_markup=InlineKeyboardMarkup(button_rows)
         )
 
 # --- Remove Movie (Owner/Admin) ---

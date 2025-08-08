@@ -354,78 +354,83 @@ async def choose_file_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if file_type == 'single':
         context.user_data['movie_data']['is_series'] = False
         reply_keyboard = [['480p', '720p', '1080p'], ["✅ All Done"]]
-        await query.edit_message_text("Step 10: Please upload the movie files. Select a quality to upload.")
+        await query.edit_message_text("Step 10: Please provide download links. Select a quality to add link.")
         await query.message.reply_text(
-            "Select a quality to upload files for:",
+            "Select a quality to add download link for:",
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=True)
         )
         return UPLOAD_SINGLE_FILES
     elif file_type == 'series':
         context.user_data['movie_data']['is_series'] = True
         context.user_data['movie_data']['next_episode'] = 1
-        await query.edit_message_text(f"Step 10: Please upload Episode 1.")
+        await query.edit_message_text(f"Step 10: Please provide download link for Episode 1.")
         return UPLOAD_SERIES_FILES
 
 async def upload_single_files(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """ সিঙ্গেল মুভির ফাইল আপলোড হ্যান্ডেল করে। """
+    """ সিঙ্গেল মুভির download link হ্যান্ডেল করে। """
     if update.message.text in ['480p', '720p', '1080p']:
         quality = update.message.text
         context.user_data['selected_quality'] = quality
-        await update.message.reply_text(f"OK. Now, send the file for {quality}.")
+        await update.message.reply_text(f"OK. Now, send the download link for {quality}.")
         return UPLOAD_SINGLE_FILES
     elif update.message.text == "✅ All Done":
         return await all_files_done(update, context)
     else:
-        # Handle file upload
+        # Handle download link input
         quality = context.user_data.get('selected_quality')
         if not quality:
             await update.message.reply_text("Please select a quality first using the buttons.")
             return UPLOAD_SINGLE_FILES
 
-        # We can handle video, document, etc.
-        file = update.message.effective_attachment
-        if not file:
-            await update.message.reply_text("Please send a valid file (video or document).")
+        download_link = update.message.text.strip()
+        
+        # Basic link validation
+        if not (download_link.startswith('http://') or download_link.startswith('https://')):
+            await update.message.reply_text("Please send a valid download link (must start with http:// or https://)")
             return UPLOAD_SINGLE_FILES
 
-        context.user_data['movie_data']['files'][quality] = (file.file_id, file.file_unique_id)
+        # Store the download link instead of file_id
+        context.user_data['movie_data']['files'][quality] = download_link
         del context.user_data['selected_quality']
 
         reply_keyboard = [['480p', '720p', '1080p'], ["✅ All Done"]]
         await update.message.reply_text(
-            f"✅ {quality} file saved. Select another quality or click 'All Done' when finished.",
+            f"✅ {quality} download link saved. Select another quality or click 'All Done' when finished.",
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=True)
         )
         return UPLOAD_SINGLE_FILES
 
 async def upload_series_files(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """ সিরিজের ফাইল আপলোড হ্যান্ডেল করে। """
+    """ সিরিজের download link হ্যান্ডেল করে। """
     if update.message.text and update.message.text.startswith("Upload Episode"):
         episode_num = context.user_data['movie_data']['next_episode']
-        await update.message.reply_text(f"OK. Now, send the file for Episode {episode_num}.")
+        await update.message.reply_text(f"OK. Now, send the download link for Episode {episode_num}.")
         return UPLOAD_SERIES_FILES
     elif update.message.text == "✅ All Done":
         return await all_files_done(update, context)
     else:
-        # Handle file upload
-        file = update.message.effective_attachment
-        if not file:
-            await update.message.reply_text("Please send a valid file (video or document).")
+        # Handle download link input
+        download_link = update.message.text.strip()
+        
+        # Basic link validation
+        if not (download_link.startswith('http://') or download_link.startswith('https://')):
+            await update.message.reply_text("Please send a valid download link (must start with http:// or https://)")
             return UPLOAD_SERIES_FILES
 
         episode_num = context.user_data['movie_data']['next_episode']
         quality_key = f"E{episode_num:02d}" # E01, E02...
 
-        context.user_data['movie_data']['files'][quality_key] = (file.file_id, file.file_unique_id)
+        # Store the download link instead of file_id
+        context.user_data['movie_data']['files'][quality_key] = download_link
 
-        await update.message.reply_text(f"✅ Episode {episode_num} saved.")
+        await update.message.reply_text(f"✅ Episode {episode_num} download link saved.")
 
         context.user_data['movie_data']['next_episode'] += 1
         episode_num += 1
 
         reply_keyboard = [[f"Upload Episode {episode_num}"], ["✅ All Done"]]
         await update.message.reply_text(
-            "Upload the next episode or click 'All Done'.",
+            "Add the next episode link or click 'All Done'.",
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=True)
         )
         return UPLOAD_SERIES_FILES
@@ -437,7 +442,7 @@ async def all_files_done(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     movie_data = context.user_data['movie_data']
 
     if not movie_data.get('files'):
-        await update.message.reply_text("⚠️ You haven't uploaded any files! Please upload at least one file or /cancel.")
+        await update.message.reply_text("⚠️ You haven't added any download links! Please add at least one download link or /cancel.")
         return UPLOAD_SINGLE_FILES if not movie_data.get('is_series') else UPLOAD_SERIES_FILES
 
     await update.message.reply_text("Great! All data collected. Generating preview...", reply_markup=ReplyKeyboardRemove())

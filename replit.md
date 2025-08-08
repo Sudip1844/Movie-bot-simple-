@@ -126,6 +126,24 @@ The application adopts a modular architecture, promoting separation of concerns 
 - Maintained full functionality while improving performance and reducing costs
 - Applied to: Movie Addition, Stats Display, Movie Requests, all conversation workflows
 
+**Pagination System for Movie Requests (August 8, 2025)**
+- Implemented pagination system for "📋 Show Requests" command displaying only 5 requests per page
+- Added navigation buttons (Previous/Next/Cancel) for easy browsing through multiple request pages
+- Enhanced database functions with offset/limit support: get_pending_requests() and get_total_pending_requests_count()
+- Added pagination controls in callback handler with "requests_page_X" and "requests_cancel" callbacks
+- Shows current page information (Page X/Y) for better user navigation experience
+- Optimized for admin/owner workflow to handle large numbers of pending requests efficiently
+
+**Movie Addition System Conversion - File Upload to Direct Links (August 8, 2025)**
+- Completely converted movie addition workflow from file uploads to direct download link inputs
+- Updated conversation handlers: upload_single_files() and upload_series_files() now handle URL inputs
+- Added basic link validation requiring http:// or https:// protocol for all download links
+- Modified quality selection process: "Select quality to add download link" instead of file uploads
+- Updated download system in callback handler to provide direct browser-based download links
+- Enhanced user experience: instant access to download links without file storage limitations
+- Maintained all existing functionality while eliminating file upload/storage requirements
+- Database now stores direct download URLs instead of Telegram file_id tuples
+
 **Bug Fixes and UI Improvements (August 6, 2025)**
 - Fixed critical category browsing issue - movies now properly display when selecting categories
 - Updated movie display format to show "Title: Movie Name" instead of plain movie names

@@ -1,4 +1,31 @@
 {
-  "next_id": 7,
-  "movies": {}
+  "next_id": 8,
+  "movies": {
+    "7": {
+      "added_by": 5379553841,
+      "categories": [
+        "Bollywood 🇮🇳",
+        "Hollywood 🇺🇸"
+      ],
+      "languages": [
+        "Hindi",
+        "Bengali"
+      ],
+      "files": {
+        "480p": [
+          "BAACAgUAAxkBAAICDmiWKshjImBq6B4m32g188apeV4VAAJEGgACouawVMBZk53O-chCNgQ",
+          "AgADRBoAAqLmsFQ"
+        ]
+      },
+      "thumbnail_file_id": "AgACAgUAAxkBAAICAAFolipqqoCL2WrL-Di3PpOzWe36SAAC8tIxG6LmsFT1iGAAAfWHMYABAAMCAAN5AAM2BA",
+      "title": "Title",
+      "release_year": "N/A",
+      "runtime": "N/A",
+      "imdb_rating": "N/A",
+      "is_series": false,
+      "movie_id": 7,
+      "added_at": "2025-08-08T16:50:38.577680",
+      "download_count": 0
+    }
+  }
 }

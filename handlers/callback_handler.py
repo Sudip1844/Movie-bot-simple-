@@ -81,7 +81,7 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             await query.message.reply_text("👇 Click the button below to download directly.", reply_markup=download_markup)
             
         elif prefix == 'download':
-            # Handle direct download requests
+            # Handle direct download requests - now with direct links
             movie_id, quality = int(parts[1]), '_'.join(parts[2:])
             movie_details = db.get_movie_details(movie_id)
             if not movie_details:
@@ -93,38 +93,18 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
                 await query.edit_message_text(f"❌ Quality {quality} not available for this movie.")
                 return
                 
-            file_info = files[quality]
-            # Handle different file storage formats
-            if isinstance(file_info, list) and len(file_info) > 0:
-                file_id = file_info[0]  # Take first file ID from list
-            elif isinstance(file_info, tuple):
-                file_id = file_info[0]  # Take first from tuple
-            else:
-                file_id = file_info  # Direct file ID
-                
-            # Send the file directly
+            download_link = files[quality]
             movie_title = movie_details.get('title', 'Unknown')
-            await query.edit_message_text(f"📥 Sending {movie_title} ({quality})...")
             
             # Increment download count
             db.increment_download_count(movie_id)
             
-            try:
-                # Try sending as video first (most movie files are videos)
-                try:
-                    await context.bot.send_video(chat_id=user_id, video=file_id)
-                    logger.info(f"Successfully sent video {file_id} to user {user_id}")
-                except Exception as video_error:
-                    logger.info(f"Failed to send as video, trying as document: {video_error}")
-                    # If video fails, try as document
-                    await context.bot.send_document(chat_id=user_id, document=file_id)
-                    logger.info(f"Successfully sent document {file_id} to user {user_id}")
-                    
-                await query.message.reply_text("✅ File sent successfully!")
-                
-            except Exception as e:
-                logger.error(f"Failed to send file with ID {file_id} to user {user_id}. Error: {e}")
-                await query.message.reply_text("❌ There was an error sending the file. Please try again or contact support.")
+            # Send the direct download link
+            await query.edit_message_text(
+                f"🎬 {movie_title} ({quality})\n\n"
+                f"📥 Direct Download Link:\n{download_link}\n\n"
+                f"Click the link above to download directly from your browser."
+            )
 
         elif prefix == 'view':
             movie_id = int(parts[1])
@@ -180,6 +160,18 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         elif prefix == 'req':
             action, request_id = parts[1], int(parts[2])
             await handle_request_action(update, context, request_id, action)
+        
+        elif prefix == 'requests':
+            # Handle requests pagination
+            if parts[1] == 'page':
+                page = int(parts[2])
+                context.user_data['requests_page'] = page
+                
+                from handlers.movie_handlers import show_requests
+                await show_requests(update, context)
+            
+            elif parts[1] == 'cancel':
+                await query.edit_message_text("❌ Request viewing cancelled.")
 
         elif callback_data in ['confirm_delete', 'cancel_delete'] or callback_data.startswith('delete_'):
             # These callbacks are handled by the remove_movie conversation handler
@@ -300,7 +292,11 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         await query.edit_message_text("❌ An unexpected error occurred. Please try again.")
     except Exception as e:
         logger.error(f"A critical error occurred in handle_callback_query: {e}")
-        await query.edit_message_text("❌ A critical error occurred. The developer has been notified.")
+        try:
+            await query.edit_message_text("❌ A critical error occurred. The developer has been notified.")
+        except:
+            # If edit fails, send new message
+            await query.message.reply_text("❌ A critical error occurred. The developer has been notified.")
 
 # Handler to be imported in main.py
 callback_query_handler = CallbackQueryHandler(handle_callback_query)
