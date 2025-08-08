@@ -41,16 +41,13 @@ async def add_admin_start(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Set conversation commands for both message and callback query
     await set_conversation_commands(update, context)
     
-    # Store initial message for editing throughout conversation
+    # Simple message without storing for editing
     if update.callback_query:
         query = update.callback_query
         await query.answer()
-        context.user_data['admin_message'] = query.message
-        
         await query.edit_message_text("👤 Forward message from user or send User ID:")
     else:
-        sent_msg = await update.message.reply_text("👤 Forward message from user or send User ID:", reply_markup=keyboard)
-        context.user_data['admin_message'] = sent_msg
+        await update.message.reply_text("👤 Forward message from user or send User ID:", reply_markup=keyboard)
     return GET_ADMIN_USERID
 
 async def get_admin_userid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -93,15 +90,8 @@ async def get_admin_userid(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     context.user_data['new_admin'] = {'id': user_id, 'first_name': first_name, 'username': username}
     
-    # Edit the original message instead of sending new one
-    admin_message = context.user_data.get('admin_message')
-    if admin_message:
-        try:
-            await admin_message.edit_text(f"✅ User: {first_name} (@{username})\n\nEnter short name (e.g., 'Sudip'):")
-        except:
-            await update.message.reply_text(f"✅ User: {first_name} (@{username})\n\nEnter short name:")
-    else:
-        await update.message.reply_text(f"✅ User: {first_name} (@{username})\n\nEnter short name:")
+    # Simple message without editing
+    await update.message.reply_text(f"✅ User: {first_name} (@{username})\n\nEnter short name (e.g., 'Sudip'):")
     return GET_ADMIN_SHORT_NAME
 
 async def get_admin_short_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -121,28 +111,20 @@ async def get_admin_short_name(update: Update, context: ContextTypes.DEFAULT_TYP
     
     context.user_data['new_admin']['short_name'] = short_name
     
-    # Add admin directly and show final result in original message
+    # Add admin directly and show result
     admin_info = context.user_data['new_admin']
     success = db.add_admin(admin_info['id'], admin_info['short_name'], admin_info.get('first_name', 'Unknown'), admin_info.get('username'))
     
-    admin_message = context.user_data.get('admin_message')
     if success:
         result_text = f"✅ {admin_info['short_name']} added as admin\nUser ID: {admin_info['id']}"
     else:
         result_text = f"❌ Failed to add {admin_info['short_name']} as admin"
     
-    if admin_message:
-        try:
-            await admin_message.edit_text(result_text)
-        except:
-            await update.message.reply_text(result_text)
-    else:
-        await update.message.reply_text(result_text)
-    
     from utils import restore_main_keyboard
     user_role = db.get_user_role(update.effective_user.id)
     keyboard = await restore_main_keyboard(update, context, user_role)
-    await update.message.reply_text("Done.", reply_markup=keyboard)
+    await update.message.reply_text(result_text, reply_markup=keyboard)
+    
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -189,7 +171,7 @@ async def remove_admin_start(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return CONFIRM_REMOVE_ADMIN
 
 async def confirm_remove_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Confirms and removes the selected admin."""
+    """Shows confirmation buttons for admin removal."""
     query = update.callback_query
     await query.answer()
     
@@ -199,19 +181,48 @@ async def confirm_remove_admin(update: Update, context: ContextTypes.DEFAULT_TYP
         admin_info = db.get_admin_info(admin_id)
         admin_name = admin_info.get('short_name', f'Admin-{admin_id}') if admin_info else f'Admin-{admin_id}'
         
-        success = db.remove_admin(admin_id_str)
+        # Store admin info for final confirmation
+        context.user_data['admin_to_remove'] = {'id': admin_id, 'name': admin_name}
+        
+        # Create confirm/cancel buttons
+        buttons = [
+            [
+                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_admin_remove_{admin_id}"),
+                InlineKeyboardButton("❌ Cancel", callback_data="cancel_admin_remove")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+        
+        await query.edit_message_text(f"🗑️ Remove {admin_name} as admin?", reply_markup=reply_markup)
+    
+    return CONFIRM_REMOVE_ADMIN
+
+async def final_admin_removal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handles final confirm/cancel for admin removal."""
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data.startswith("confirm_admin_remove_"):
+        admin_id = int(query.data.split("_")[3])
+        admin_info = context.user_data.get('admin_to_remove', {})
+        admin_name = admin_info.get('name', f'Admin-{admin_id}')
+        
+        success = db.remove_admin(str(admin_id))
         
         if success:
             result_text = f"✅ {admin_name} removed as admin"
         else:
             result_text = f"❌ Failed to remove {admin_name}"
-        
+            
         await query.edit_message_text(result_text)
         
-        from utils import restore_main_keyboard
-        user_role = db.get_user_role(update.effective_user.id)
-        keyboard = await restore_main_keyboard(update, context, user_role)
-        await query.message.reply_text("Done.", reply_markup=keyboard)
+    elif query.data == "cancel_admin_remove":
+        await query.edit_message_text("❌ Admin removal cancelled.")
+    
+    from utils import restore_main_keyboard
+    user_role = db.get_user_role(update.effective_user.id)
+    keyboard = await restore_main_keyboard(update, context, user_role)
+    await query.message.reply_text("Done.", reply_markup=keyboard)
     
     context.user_data.clear()
     return ConversationHandler.END
@@ -230,15 +241,13 @@ async def add_channel_start(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     # Set conversation commands for both message and callback query
     await set_conversation_commands(update, context)
     
-    # Handle both message and callback query
+    # Simple message without storing for editing
     if update.callback_query:
         query = update.callback_query
         await query.answer()
-        context.user_data['channel_message'] = query.message
         await query.edit_message_text("📺 Send channel link (e.g., https://t.me/moviezone969):")
     else:
-        sent_msg = await update.message.reply_text("📺 Send channel link (e.g., https://t.me/moviezone969):", reply_markup=keyboard)
-        context.user_data['channel_message'] = sent_msg
+        await update.message.reply_text("📺 Send channel link (e.g., https://t.me/moviezone969):", reply_markup=keyboard)
     return GET_CHANNEL_LINK
 
 async def get_channel_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -265,23 +274,11 @@ async def get_channel_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         
         context.user_data['new_channel'] = {'link': channel_link, 'username': channel_username}
         
-        if channel_message:
-            try:
-                await channel_message.edit_text(f"✅ Channel: {channel_link}\n\nEnter short name (e.g., 'Main'):")
-            except:
-                await update.message.reply_text(f"✅ Channel: {channel_link}\n\nEnter short name:")
-        else:
-            await update.message.reply_text(f"✅ Channel: {channel_link}\n\nEnter short name:")
-        
+        # Simple message without editing
+        await update.message.reply_text(f"✅ Channel: {channel_link}\n\nEnter short name (e.g., 'Main'):")
         return GET_CHANNEL_SHORT_NAME
     else:
-        if channel_message:
-            try:
-                await channel_message.edit_text("❌ Invalid link format. Send channel link:")
-            except:
-                await update.message.reply_text("❌ Invalid link format. Send channel link:")
-        else:
-            await update.message.reply_text("❌ Invalid link format. Send channel link:")
+        await update.message.reply_text("❌ Invalid link format. Send channel link:")
         return GET_CHANNEL_LINK
 
 async def get_channel_short_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -309,39 +306,23 @@ async def get_channel_short_name(update: Update, context: ContextTypes.DEFAULT_T
         chat = await context.bot.get_chat(channel_id)
         channel_name = chat.title or channel_info['username']
     except Exception as e:
-        channel_message = context.user_data.get('channel_message')
         error_text = f"❌ Cannot access {channel_id}. Please check bot permissions."
-        
-        if channel_message:
-            try:
-                await channel_message.edit_text(error_text)
-            except:
-                await update.message.reply_text(error_text)
-        else:
-            await update.message.reply_text(error_text)
+        await update.message.reply_text(error_text)
         return GET_CHANNEL_LINK
     
     # Add channel to database  
     success = db.add_channel(channel_id, channel_name or "Unknown", short_name or "Unknown")
     
-    channel_message = context.user_data.get('channel_message')
     if success:
         result_text = f"✅ {short_name} added as channel\nID: {channel_id}"
     else:
         result_text = f"❌ Failed to add {short_name} channel"
     
-    if channel_message:
-        try:
-            await channel_message.edit_text(result_text)
-        except:
-            await update.message.reply_text(result_text)
-    else:
-        await update.message.reply_text(result_text)
-    
     from utils import restore_main_keyboard
     user_role = db.get_user_role(update.effective_user.id)
     keyboard = await restore_main_keyboard(update, context, user_role)
-    await update.message.reply_text("Done.", reply_markup=keyboard)
+    await update.message.reply_text(result_text, reply_markup=keyboard)
+    
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -390,7 +371,7 @@ async def remove_channel_start(update: Update, context: ContextTypes.DEFAULT_TYP
     return CONFIRM_REMOVE_CHANNEL
 
 async def confirm_remove_channel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Confirms and removes the selected channel."""
+    """Shows confirmation buttons for channel removal."""
     query = update.callback_query
     await query.answer()
     
@@ -399,19 +380,48 @@ async def confirm_remove_channel(update: Update, context: ContextTypes.DEFAULT_T
         channel_info = db.get_channel_info(channel_id)
         channel_name = channel_info.get('short_name', channel_id) if channel_info else channel_id
         
+        # Store channel info for final confirmation
+        context.user_data['channel_to_remove'] = {'id': channel_id, 'name': channel_name}
+        
+        # Create confirm/cancel buttons
+        buttons = [
+            [
+                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_channel_remove_{channel_id}"),
+                InlineKeyboardButton("❌ Cancel", callback_data="cancel_channel_remove")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+        
+        await query.edit_message_text(f"🗑️ Remove {channel_name} channel?", reply_markup=reply_markup)
+    
+    return CONFIRM_REMOVE_CHANNEL
+
+async def final_channel_removal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handles final confirm/cancel for channel removal."""
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data.startswith("confirm_channel_remove_"):
+        channel_id = query.data.split("_")[3]
+        channel_info = context.user_data.get('channel_to_remove', {})
+        channel_name = channel_info.get('name', channel_id)
+        
         success = db.remove_channel(channel_id)
         
         if success:
             result_text = f"✅ {channel_name} removed as channel"
         else:
             result_text = f"❌ Failed to remove {channel_name}"
-        
+            
         await query.edit_message_text(result_text)
         
-        from utils import restore_main_keyboard
-        user_role = db.get_user_role(update.effective_user.id)
-        keyboard = await restore_main_keyboard(update, context, user_role)
-        await query.message.reply_text("Done.", reply_markup=keyboard)
+    elif query.data == "cancel_channel_remove":
+        await query.edit_message_text("❌ Channel removal cancelled.")
+    
+    from utils import restore_main_keyboard
+    user_role = db.get_user_role(update.effective_user.id)
+    keyboard = await restore_main_keyboard(update, context, user_role)
+    await query.message.reply_text("Done.", reply_markup=keyboard)
     
     context.user_data.clear()
     return ConversationHandler.END
@@ -529,7 +539,10 @@ remove_admin_conv = ConversationHandler(
         CallbackQueryHandler(remove_admin_start, pattern='^admin_remove$')
     ],
     states={
-        CONFIRM_REMOVE_ADMIN: [CallbackQueryHandler(confirm_remove_admin, pattern='^(remove_admin_|cancel_remove_admin).*$')],
+        CONFIRM_REMOVE_ADMIN: [
+            CallbackQueryHandler(confirm_remove_admin, pattern='^remove_admin_.*$'),
+            CallbackQueryHandler(final_admin_removal, pattern='^(confirm_admin_remove_.*|cancel_admin_remove)$')
+        ],
     },
     fallbacks=[
         CommandHandler('cancel', cancel_admin_conversation),
@@ -558,7 +571,10 @@ remove_channel_conv = ConversationHandler(
         CallbackQueryHandler(remove_channel_start, pattern='^channel_remove$')
     ],
     states={
-        CONFIRM_REMOVE_CHANNEL: [CallbackQueryHandler(confirm_remove_channel, pattern='^(remove_channel_|cancel_remove_channel).*$')],
+        CONFIRM_REMOVE_CHANNEL: [
+            CallbackQueryHandler(confirm_remove_channel, pattern='^remove_channel_.*$'),
+            CallbackQueryHandler(final_channel_removal, pattern='^(confirm_channel_remove_.*|cancel_channel_remove)$')
+        ],
     },
     fallbacks=[
         CommandHandler('cancel', cancel_channel_conversation),
