@@ -168,7 +168,7 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = ReplyKeyboardMarkup(skip_keyboard, resize_keyboard=True)
     
     await update.message.reply_text(
-        "✅ Title saved.\n\nStep 3: Enter the release year (e.g., 2023) or press '⏭️ Skip Release Year' to use default (N/A).",
+        "✅ Title saved.\n\nStep 3: Enter the release year (e.g., 2023).",
         reply_markup=keyboard
     )
     return GET_RELEASE_YEAR
