@@ -411,7 +411,4 @@ def get_movies_by_uploader(admin_id: int, limit: int = 30) -> List[dict]:
     admin_movies.sort(key=lambda x: x.get('added_at', ''), reverse=True)
     return admin_movies[:limit]
 
-def get_all_admins() -> List[dict]:
-    """Get all admins for stats selection."""
-    admins = load_json(ADMINS_FILE)
-    return list(admins.values())
+
