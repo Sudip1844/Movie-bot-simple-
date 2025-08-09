@@ -144,6 +144,14 @@ The application adopts a modular architecture, promoting separation of concerns 
 - Maintained all existing functionality while eliminating file upload/storage requirements
 - Database now stores direct download URLs instead of Telegram file_id tuples
 
+**Stats System Bug Fixes (August 9, 2025)**
+- Fixed critical "📊 Show Stats" command functionality
+- Corrected `get_movies_by_uploader()` function to properly access movies["movies"].values() instead of movies.values()
+- Fixed error handling in `handle_stats_admin()` to safely handle admin info retrieval
+- Removed duplicate `get_all_admins()` function definition causing LSP errors
+- All three stats search options now working properly: Search by Movie Name, Category, and Admin Name
+- Enhanced error handling for better user experience in stats display
+
 **Bug Fixes and UI Improvements (August 6, 2025)**
 - Fixed critical category browsing issue - movies now properly display when selecting categories
 - Updated movie display format to show "Title: Movie Name" instead of plain movie names

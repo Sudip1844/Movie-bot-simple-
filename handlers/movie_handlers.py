@@ -511,7 +511,11 @@ async def handle_stats_admin(update: Update, context: ContextTypes.DEFAULT_TYPE)
     movies = db.get_movies_by_uploader(admin_id, limit=30)
     
     from config import OWNER_ID
-    admin_name = "Owner" if str(admin_id) == str(OWNER_ID) else db.get_admin_info(admin_id).get('short_name', f"Admin-{admin_id}")
+    if str(admin_id) == str(OWNER_ID):
+        admin_name = "Owner"
+    else:
+        admin_info = db.get_admin_info(admin_id)
+        admin_name = admin_info.get('short_name', f"Admin-{admin_id}") if admin_info else f"Admin-{admin_id}"
     
     if not movies:
         await query.edit_message_text(f"❌ No movies by {admin_name}.")

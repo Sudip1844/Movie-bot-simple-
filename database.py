@@ -403,7 +403,7 @@ def get_movies_by_uploader(admin_id: int, limit: int = 30) -> List[dict]:
     movies = load_json(MOVIES_FILE)
     
     admin_movies = [
-        movie for movie in movies.values() 
+        movie for movie in movies["movies"].values() 
         if movie.get('added_by') == admin_id
     ]
     
