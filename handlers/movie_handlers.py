@@ -263,35 +263,36 @@ async def show_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     
-    # Add pagination controls at the end
-    nav_buttons = []
-    
-    # Previous button
-    if page > 1:
-        nav_buttons.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"requests_page_{page-1}"))
-    
-    # Next button
-    if len(pending_requests) == 5 and offset + 5 < total_requests:
-        nav_buttons.append(InlineKeyboardButton("Next ➡️", callback_data=f"requests_page_{page+1}"))
-    
-    # Cancel button
-    nav_buttons.append(InlineKeyboardButton("❌ Cancel", callback_data="requests_cancel"))
-    
-    if nav_buttons:
-        # Split into rows for better layout
-        button_rows = []
-        if len(nav_buttons) == 3:  # Previous, Next, Cancel
-            button_rows.append([nav_buttons[0], nav_buttons[1]])
-            button_rows.append([nav_buttons[2]])
-        elif len(nav_buttons) == 2:  # Two buttons (either prev+cancel or next+cancel)
-            button_rows.append(nav_buttons)
-        else:  # Only cancel
-            button_rows.append(nav_buttons)
+    # Add pagination controls only if total requests > 5
+    if total_requests > 5:
+        nav_buttons = []
         
-        await update.message.reply_text(
-            "Navigation:",
-            reply_markup=InlineKeyboardMarkup(button_rows)
-        )
+        # Previous button
+        if page > 1:
+            nav_buttons.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"requests_page_{page-1}"))
+        
+        # Next button
+        if len(pending_requests) == 5 and offset + 5 < total_requests:
+            nav_buttons.append(InlineKeyboardButton("Next ➡️", callback_data=f"requests_page_{page+1}"))
+        
+        # Cancel button
+        nav_buttons.append(InlineKeyboardButton("❌ Cancel", callback_data="requests_cancel"))
+        
+        if nav_buttons:
+            # Split into rows for better layout
+            button_rows = []
+            if len(nav_buttons) == 3:  # Previous, Next, Cancel
+                button_rows.append([nav_buttons[0], nav_buttons[1]])
+                button_rows.append([nav_buttons[2]])
+            elif len(nav_buttons) == 2:  # Two buttons (either prev+cancel or next+cancel)
+                button_rows.append(nav_buttons)
+            else:  # Only cancel
+                button_rows.append(nav_buttons)
+            
+            await update.message.reply_text(
+                "Navigation:",
+                reply_markup=InlineKeyboardMarkup(button_rows)
+            )
 
 # --- Remove Movie (Owner/Admin) ---
 

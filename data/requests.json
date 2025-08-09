@@ -157,8 +157,9 @@
       "request_id": 20,
       "user_id": 7778563160,
       "movie_name": "Hi",
-      "status": "pending",
-      "requested_at": "2025-08-09T07:18:06.287477"
+      "status": "accepted",
+      "requested_at": "2025-08-09T07:18:06.287477",
+      "updated_at": "2025-08-09T07:34:56.340000"
     },
     "21": {
       "request_id": 21,
