@@ -149,6 +149,8 @@ The application adopts a modular architecture, promoting separation of concerns 
 - Corrected `get_movies_by_uploader()` function to properly access movies["movies"].values() instead of movies.values()
 - Fixed error handling in `handle_stats_admin()` to safely handle admin info retrieval
 - Removed duplicate `get_all_admins()` function definition causing LSP errors
+- Fixed category matching issue in `get_movies_by_category()` - now handles both full category names with emojis and callback data without emojis
+- Category search now properly matches "Bollywood" callback to "Bollywood 🇮🇳" stored category
 - All three stats search options now working properly: Search by Movie Name, Category, and Admin Name
 - Enhanced error handling for better user experience in stats display
 

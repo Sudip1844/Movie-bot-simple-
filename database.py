@@ -224,17 +224,17 @@ def get_movies_by_category(category: str, limit: int = 10, offset: int = 0) -> L
     """Get movies by category with pagination support."""
     movies = load_json(MOVIES_FILE)
     
-    if category == "All 🌐":
+    if category == "All 🌐" or category == "All":
         # Return all movies for alphabet filtering
         all_matching = list(movies["movies"].values())
     else:
-        # First collect all matching movies - handle exact category match
+        # First collect all matching movies - handle both exact match and partial match
         all_matching = []
         for movie_data in movies["movies"].values():
             categories = movie_data.get("categories", [])
-            # Check for exact category match
+            # Check for exact category match or partial match (for callback data)
             for movie_category in categories:
-                if category == movie_category:
+                if category == movie_category or movie_category.startswith(category + " "):
                     all_matching.append(movie_data)
                     break
     
