@@ -171,14 +171,16 @@ def format_movie_post(movie_details: dict, channel_username: str) -> str:
                 # Create download link for first episode
                 first_episode = next((quality for quality in files.keys() if quality.startswith('E')), None)
                 if first_episode:
-                    deep_link = f"https://t.me/{BOT_USERNAME}?start=file_{movie_details['movie_id']}_{first_episode}"
-                    download_links = f"👉 <a href='{deep_link}'>Click To Download</a> 📥"
+                    # Use actual download URL instead of bot redirect
+                    actual_download_url = files[first_episode]
+                    download_links = f"👉 <a href='{actual_download_url}'>Click To Download</a> 📥"
     else:
         # সিঙ্গেল মুভির জন্য প্রতিটি কোয়ালিটির লিঙ্ক
         qualities = sorted([quality for quality in files.keys() if not quality.startswith('E')])
         for quality in qualities:
-            deep_link = f"https://t.me/{BOT_USERNAME}?start=file_{movie_details['movie_id']}_{quality}"
-            download_links += f"{quality} || 👉 <a href='{deep_link}'>Click To Download</a> 📥\n"
+            # Use actual download URL instead of bot redirect
+            actual_download_url = files[quality]
+            download_links += f"{quality} || 👉 <a href='{actual_download_url}'>Click To Download</a> 📥\n"
 
     # Build dynamic template - only include non-N/A fields
     title = movie_details.get('title', 'Unknown')

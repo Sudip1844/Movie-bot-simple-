@@ -63,20 +63,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                         )
                         return
                     
-                    # Show the movie with direct download option
-                    from utils import generate_direct_download_button
+                    # Show the movie with direct download link
                     movie_title = movie_details.get('title', 'this movie')
+                    direct_download_url = files[quality]
                     
                     await context.bot.send_message(
                         chat_id=user.id,
-                        text=f"🍿 {movie_title}\n\nReady to download in {quality}?"
-                    )
-                    
-                    download_markup = generate_direct_download_button(movie_id=movie_id, quality=quality)
-                    await context.bot.send_message(
-                        chat_id=user.id,
-                        text="👇 Click the button below to download directly.",
-                        reply_markup=download_markup
+                        text=f"🍿 {movie_title} ({quality})\n\n"
+                             f"📥 Direct Download Link:\n"
+                             f"👉 <a href='{direct_download_url}'>Click To Download</a> 📥\n\n"
+                             f"Click the link above to download directly from your browser.",
+                        parse_mode=ParseMode.HTML
                     )
                     return
                     

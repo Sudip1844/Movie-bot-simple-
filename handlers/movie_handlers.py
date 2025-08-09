@@ -104,29 +104,26 @@ async def show_movie_details(update: Update, context: ContextTypes.DEFAULT_TYPE,
     if categories:
         response_text += f"🎪 Categories: {', '.join(categories)}"
     
-    # Create quality buttons
-    files = movie.get('files', {})
-    buttons = []
-    for quality in files.keys():
-        callback_data = f"quality_{movie['movie_id']}_{quality}"
-        buttons.append([InlineKeyboardButton(f"🎬 {quality}", callback_data=callback_data)])
+    # Use movie post format instead of quality buttons
+    from utils import format_movie_post
+    from config import CHANNEL_USERNAME
     
-    quality_buttons_markup = InlineKeyboardMarkup(buttons)
+    # Format as movie post with direct download links
+    post_text = format_movie_post(movie, CHANNEL_USERNAME)
     
     thumbnail_id = movie.get('thumbnail_file_id')
     if thumbnail_id:
         try:
             await update.message.reply_photo(
                 photo=thumbnail_id, 
-                caption=response_text, 
-                parse_mode=ParseMode.HTML, 
-                reply_markup=quality_buttons_markup
+                caption=post_text, 
+                parse_mode=ParseMode.HTML
             )
         except Exception as e:
             logger.error(f"Failed to send photo for movie {movie['movie_id']}: {e}")
-            await update.message.reply_text(response_text, reply_markup=quality_buttons_markup)
+            await update.message.reply_text(post_text, parse_mode=ParseMode.HTML)
     else:
-        await update.message.reply_text(response_text, reply_markup=quality_buttons_markup)
+        await update.message.reply_text(post_text, parse_mode=ParseMode.HTML)
 
 # --- Browse Categories ---
 

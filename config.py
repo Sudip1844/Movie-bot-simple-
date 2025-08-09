@@ -9,6 +9,9 @@ BOT_TOKEN = "7269265854:AAFYz0-nIJVQbNcJTE1tiW5Nz6Zk-MnGfFA"
 # আপনার বটের ইউজারনেম (t.me/YourBotUsername) - আপনার দেওয়া ছবি অনুযায়ী
 BOT_USERNAME = "movierecivebot"
 
+# Default channel username for movie posts
+CHANNEL_USERNAME = "moviezone969"
+
 # --- Owner Configuration ---
 # বটের মালিকের টেলিগ্রাম ইউজার আইডি
 OWNER_ID = 5379553841

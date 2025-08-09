@@ -137,25 +137,23 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             if categories:
                 response_text += f"🎪 Categories: {', '.join(categories)}"
             
-            # Create quality buttons
-            files = movie_details.get('files', {})
-            buttons = []
-            for quality in files.keys():
-                callback_data = f"quality_{movie_id}_{quality}"
-                buttons.append([InlineKeyboardButton(f"🎬 {quality}", callback_data=callback_data)])
+            # Use movie post format instead of quality buttons
+            from utils import format_movie_post
+            from config import CHANNEL_USERNAME
             
-            quality_buttons_markup = InlineKeyboardMarkup(buttons)
+            # Format as movie post with direct download links
+            post_text = format_movie_post(movie_details, CHANNEL_USERNAME)
             
             thumbnail_id = movie_details.get('thumbnail_file_id')
             if thumbnail_id:
                 try:
                     await query.edit_message_text("Please see the movie details below:")
-                    await query.message.reply_photo(photo=thumbnail_id, caption=response_text, reply_markup=quality_buttons_markup)
+                    await query.message.reply_photo(photo=thumbnail_id, caption=post_text, parse_mode=ParseMode.HTML)
                 except Exception as e:
                     logger.error(f"Failed to send photo for movie {movie_id}: {e}")
-                    await query.message.reply_text(response_text, reply_markup=quality_buttons_markup)
+                    await query.message.reply_text(post_text, parse_mode=ParseMode.HTML)
             else:
-                await query.message.reply_text(response_text, reply_markup=quality_buttons_markup)
+                await query.edit_message_text(post_text, parse_mode=ParseMode.HTML)
         
         elif prefix == 'req':
             action, request_id = parts[1], int(parts[2])
