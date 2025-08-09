@@ -1,5 +1,5 @@
 {
-  "next_id": 8,
+  "next_id": 9,
   "movies": {
     "7": {
       "added_by": 5379553841,
@@ -25,6 +25,32 @@
       "is_series": false,
       "movie_id": 7,
       "added_at": "2025-08-08T16:50:38.577680",
+      "download_count": 0
+    },
+    "8": {
+      "added_by": 5379553841,
+      "categories": [
+        "Web Series 🎥",
+        "Anime & cartoon 🌀",
+        "Hollywood 🇺🇸",
+        "South Indian 🎬"
+      ],
+      "languages": [
+        "Bengali",
+        "English",
+        "Hindi"
+      ],
+      "files": {
+        "720p": "https://youtu.be/dpYEVhO2foQ?si=WWNdxqLGllgNu0QO"
+      },
+      "thumbnail_file_id": "AgACAgUAAxkBAAICjWiW_MJGRKsWYdJIg-00BS3bPsJaAALYyjEboua4VFlvkK9VXIeOAQADAgADeQADNgQ",
+      "title": "Hello",
+      "release_year": "N/A",
+      "runtime": "N/A",
+      "imdb_rating": "N/A",
+      "is_series": false,
+      "movie_id": 8,
+      "added_at": "2025-08-09T07:49:27.966442",
       "download_count": 0
     }
   }

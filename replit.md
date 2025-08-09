@@ -44,6 +44,7 @@ The application adopts a modular architecture, promoting separation of concerns 
 - **Skip Functionality**: Added skip buttons to movie addition process for metadata (release year, runtime, IMDb rating), categories, and languages, using sensible defaults and hiding skipped fields from posts. Movie addition now uses direct download link inputs instead of file uploads.
 - **Automated Posting**: After preview, movies can be posted to multiple selected channels with validation checks.
 - **Message Cleanup**: A two-tier automatic chat cleanup system with step-by-step conversation cleanup during workflows and a 24-hour scheduled deletion for user/admin/owner messages. Movie posts are preserved for regular users.
+- **UI/UX Improvements**: Enhanced skip button behavior for category selection (similar to language selection), consolidated step messages to reduce duplication, improved navigation control for request pagination (hides buttons when 5 or fewer requests), and dynamic cancel button behavior for channel selection.
 
 ## External Dependencies
 - `python-telegram-bot`: Primary library for Telegram Bot API interaction.

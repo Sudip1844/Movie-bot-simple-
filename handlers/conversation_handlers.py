@@ -168,7 +168,7 @@ async def get_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = ReplyKeyboardMarkup(skip_keyboard, resize_keyboard=True)
     
     await update.message.reply_text(
-        "✅ Title saved.\n\nStep 3: Enter the release year (e.g., 2023).\nOr press '⏭️ Skip Release Year' to use default (N/A).",
+        "✅ Title saved.\n\nStep 3: Enter the release year (e.g., 2023) or press '⏭️ Skip Release Year' to use default (N/A).",
         reply_markup=keyboard
     )
     return GET_RELEASE_YEAR
@@ -299,7 +299,11 @@ async def choose_categories(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         context.user_data['movie_data']['categories'].add(selected_option)
 
     # Update the keyboard with the new selection
-    keyboard = build_selection_keyboard_with_skip(CATEGORIES, context.user_data['movie_data']['categories'])
+    # If user has selected at least one category, remove skip button (like language selection)
+    if context.user_data['movie_data']['categories']:
+        keyboard = build_selection_keyboard(CATEGORIES, context.user_data['movie_data']['categories'])
+    else:
+        keyboard = build_selection_keyboard_with_skip(CATEGORIES, context.user_data['movie_data']['categories'])
     await query.edit_message_reply_markup(reply_markup=keyboard)
     return CHOOSE_CATEGORIES
 
@@ -354,9 +358,8 @@ async def choose_file_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if file_type == 'single':
         context.user_data['movie_data']['is_series'] = False
         reply_keyboard = [['480p', '720p', '1080p'], ["✅ All Done"]]
-        await query.edit_message_text("Step 10: Please provide download links. Select a quality to add link.")
-        await query.message.reply_text(
-            "Select a quality to add download link for:",
+        await query.edit_message_text(
+            "Step 10: Please provide download links. Select a quality to add link:",
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=True)
         )
         return UPLOAD_SINGLE_FILES
@@ -563,7 +566,10 @@ async def select_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             text = f"✅ {channel['short_name']}" if channel['channel_id'] in selected_channels else f"📢 {channel['short_name']}"
             keyboard.append([InlineKeyboardButton(text, callback_data=f"channel_{channel['channel_id']}")])
         keyboard.append([InlineKeyboardButton("✅ Post to Selected Channels", callback_data="post_now")])
-        keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel_post")])
+        
+        # Only show Cancel button if no channels are selected
+        if not selected_channels:
+            keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel_post")])
 
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(keyboard))
         return SELECT_CHANNELS

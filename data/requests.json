@@ -1,5 +1,5 @@
 {
-  "next_id": 27,
+  "next_id": 28,
   "requests": {
     "1": {
       "request_id": 1,
@@ -205,8 +205,17 @@
       "request_id": 26,
       "user_id": 7778563160,
       "movie_name": "Hi",
-      "status": "pending",
-      "requested_at": "2025-08-09T07:41:25.401639"
+      "status": "deleted",
+      "requested_at": "2025-08-09T07:41:25.401639",
+      "updated_at": "2025-08-09T07:45:05.120052"
+    },
+    "27": {
+      "request_id": 27,
+      "user_id": 7778563160,
+      "movie_name": "Gi",
+      "status": "accepted",
+      "requested_at": "2025-08-09T07:44:53.838159",
+      "updated_at": "2025-08-09T07:45:27.450384"
     }
   }
 }

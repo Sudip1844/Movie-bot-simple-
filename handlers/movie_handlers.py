@@ -231,11 +231,6 @@ async def show_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     pending_requests = db.get_pending_requests(limit=5, offset=offset)
     total_requests = db.get_total_pending_requests_count()
     
-    # Debug logging
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"Show requests called: total_requests={total_requests}, pending_requests={len(pending_requests)}, page={page}")
-    
     if not pending_requests:
         if page == 1:
             await update.message.reply_text("🎉 No pending movie requests at the moment!")
@@ -269,7 +264,6 @@ async def show_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         )
     
     # Add pagination controls only if total requests > 5
-    logger.info(f"Checking pagination: total_requests={total_requests}, condition: total_requests > 5 = {total_requests > 5}")
     if total_requests > 5:
         nav_buttons = []
         
@@ -295,13 +289,10 @@ async def show_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             else:  # Only cancel
                 button_rows.append(nav_buttons)
             
-            logger.info(f"Sending navigation with {len(nav_buttons)} buttons")
             await update.message.reply_text(
                 "Navigation:",
                 reply_markup=InlineKeyboardMarkup(button_rows)
             )
-    else:
-        logger.info(f"Skipping navigation: total_requests ({total_requests}) <= 5")
 
 # --- Remove Movie (Owner/Admin) ---
 
