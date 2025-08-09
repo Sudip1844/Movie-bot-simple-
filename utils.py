@@ -194,15 +194,19 @@ def format_movie_post(movie_details: dict, channel_username: str) -> str:
                 else:
                     episode_info = f"Available Episodes: Ep{first_ep} to Ep{last_ep}"
                 
-                # Create download button for first episode - use callback data to avoid external link popup
+                # Create download link for first episode
                 first_episode = next((quality for quality in files.keys() if quality.startswith('E')), None)
                 if first_episode:
-                    download_links = f"📥 Download Link: Available via button below"
+                    # Use actual download URL instead of bot redirect
+                    actual_download_url = files[first_episode]
+                    download_links = f"👉 <a href='{actual_download_url}'>Click To Download</a> 📥"
     else:
-        # সিঙ্গেল মুভির জন্য প্রতিটি কোয়ালিটির বাটন তথ্য
+        # সিঙ্গেল মুভির জন্য প্রতিটি কোয়ালিটির লিঙ্ক
         qualities = sorted([quality for quality in files.keys() if not quality.startswith('E')])
-        if qualities:
-            download_links = "📥 Download Links: Available via buttons below"
+        for quality in qualities:
+            # Use actual download URL instead of bot redirect
+            actual_download_url = files[quality]
+            download_links += f"{quality} || 👉 <a href='{actual_download_url}'>Click To Download</a> 📥\n"
 
     # Build dynamic template - only include non-N/A fields
     title = movie_details.get('title', 'Unknown')

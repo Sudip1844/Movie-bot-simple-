@@ -99,13 +99,11 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             # Increment download count
             db.increment_download_count(movie_id)
             
-            # Send the direct download link without external link popup
+            # Send the direct download link
             await query.edit_message_text(
                 f"🎬 {movie_title} ({quality})\n\n"
-                f"📥 Direct Download Link:\n"
-                f"👉 <a href='{download_link}'>Click Here to Download</a> 📥\n\n"
-                f"⚡ Direct access without confirmation popup",
-                parse_mode=ParseMode.HTML
+                f"📥 Direct Download Link:\n{download_link}\n\n"
+                f"Click the link above to download directly from your browser."
             )
 
         elif prefix == 'view':
@@ -139,26 +137,23 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             if categories:
                 response_text += f"🎪 Categories: {', '.join(categories)}"
             
-            # Use movie post format with download buttons to avoid external link popup
-            from utils import format_movie_post, generate_download_buttons
+            # Use movie post format with direct download links
+            from utils import format_movie_post
             from config import CHANNEL_USERNAME
             
-            # Format as movie post 
+            # Format as movie post with direct download links
             post_text = format_movie_post(movie_details, CHANNEL_USERNAME)
-            
-            # Create download buttons for each quality to avoid external link confirmation
-            download_buttons = generate_download_buttons(movie_id, movie_details.get('files', {}))
             
             thumbnail_id = movie_details.get('thumbnail_file_id')
             if thumbnail_id:
                 try:
                     await query.edit_message_text("Please see the movie details below:")
-                    await query.message.reply_photo(photo=thumbnail_id, caption=post_text, parse_mode=ParseMode.HTML, reply_markup=download_buttons)
+                    await query.message.reply_photo(photo=thumbnail_id, caption=post_text, parse_mode=ParseMode.HTML)
                 except Exception as e:
                     logger.error(f"Failed to send photo for movie {movie_id}: {e}")
-                    await query.message.reply_text(post_text, parse_mode=ParseMode.HTML, reply_markup=download_buttons)
+                    await query.message.reply_text(post_text, parse_mode=ParseMode.HTML)
             else:
-                await query.edit_message_text(post_text, parse_mode=ParseMode.HTML, reply_markup=download_buttons)
+                await query.edit_message_text(post_text, parse_mode=ParseMode.HTML)
         
         elif prefix == 'req':
             action, request_id = parts[1], int(parts[2])
