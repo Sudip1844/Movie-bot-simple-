@@ -228,14 +228,16 @@ def get_movies_by_category(category: str, limit: int = 10, offset: int = 0) -> L
         # Return all movies for alphabet filtering
         all_matching = list(movies["movies"].values())
     else:
-        # First collect all matching movies - handle both exact match and partial match
+        # First collect all matching movies - exact match only
         all_matching = []
         for movie_data in movies["movies"].values():
             categories = movie_data.get("categories", [])
-            # Check for exact category match or partial match (for callback data)
+            logger.info(f"Checking movie '{movie_data.get('title')}' categories: {categories} against search category: '{category}'")
+            # Check for exact category match only
             for movie_category in categories:
-                if category == movie_category or movie_category.startswith(category + " "):
+                if category == movie_category:
                     all_matching.append(movie_data)
+                    logger.info(f"Found exact match: '{movie_category}' == '{category}'")
                     break
     
     # Sort by title for consistent ordering

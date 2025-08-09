@@ -486,10 +486,28 @@ async def handle_stats_category(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer()
     
     category = query.data.replace("cat_", "")
-    movies = db.get_movies_by_category(category, limit=30)
+    
+    # Debug logging
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Stats category callback received: '{query.data}', extracted category: '{category}'")
+    
+    # Map callback category to full category name with emoji
+    from config import BROWSE_CATEGORIES
+    full_category = None
+    for browse_cat in BROWSE_CATEGORIES:
+        if browse_cat.startswith(category + " ") or browse_cat == category:
+            full_category = browse_cat
+            break
+    
+    if not full_category:
+        full_category = category
+    
+    logger.info(f"Using full category name: '{full_category}' for search")
+    movies = db.get_movies_by_category(full_category, limit=30)
     
     if not movies:
-        await query.edit_message_text(f"❌ No movies in '{category}'.")
+        await query.edit_message_text(f"❌ No movies in '{full_category}'.")
         return ConversationHandler.END
     
     # Create movie grid markup similar to browse categories
@@ -497,7 +515,7 @@ async def handle_stats_category(update: Update, context: ContextTypes.DEFAULT_TY
     reply_markup = create_movie_grid_markup(movies, prefix="stats_view")
     
     await query.edit_message_text(
-        f"📂 {category} ({len(movies)} movies):",
+        f"📂 {full_category} ({len(movies)} movies):",
         reply_markup=reply_markup
     )
     return SHOW_STATS_MOVIE_LIST
