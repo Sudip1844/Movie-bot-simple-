@@ -104,12 +104,15 @@ async def show_movie_details(update: Update, context: ContextTypes.DEFAULT_TYPE,
     if categories:
         response_text += f"🎪 Categories: {', '.join(categories)}"
     
-    # Use movie post format instead of quality buttons
-    from utils import format_movie_post
+    # Use movie post format with download buttons to avoid external link popup
+    from utils import format_movie_post, generate_download_buttons
     from config import CHANNEL_USERNAME
     
-    # Format as movie post with direct download links
+    # Format as movie post 
     post_text = format_movie_post(movie, CHANNEL_USERNAME)
+    
+    # Create download buttons for each quality to avoid external link confirmation
+    download_buttons = generate_download_buttons(movie['movie_id'], movie.get('files', {}))
     
     thumbnail_id = movie.get('thumbnail_file_id')
     if thumbnail_id:
@@ -117,13 +120,14 @@ async def show_movie_details(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await update.message.reply_photo(
                 photo=thumbnail_id, 
                 caption=post_text, 
-                parse_mode=ParseMode.HTML
+                parse_mode=ParseMode.HTML,
+                reply_markup=download_buttons
             )
         except Exception as e:
             logger.error(f"Failed to send photo for movie {movie['movie_id']}: {e}")
-            await update.message.reply_text(post_text, parse_mode=ParseMode.HTML)
+            await update.message.reply_text(post_text, parse_mode=ParseMode.HTML, reply_markup=download_buttons)
     else:
-        await update.message.reply_text(post_text, parse_mode=ParseMode.HTML)
+        await update.message.reply_text(post_text, parse_mode=ParseMode.HTML, reply_markup=download_buttons)
 
 # --- Browse Categories ---
 

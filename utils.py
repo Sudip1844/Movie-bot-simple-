@@ -132,6 +132,32 @@ def generate_direct_download_button(movie_id: int, quality: str) -> InlineKeyboa
     button = [[InlineKeyboardButton("📥 Download Now", callback_data=callback_data)]]
     return InlineKeyboardMarkup(button)
 
+def generate_download_buttons(movie_id: int, files: dict) -> InlineKeyboardMarkup:
+    """Generate download buttons for all available qualities to avoid external link popup."""
+    buttons = []
+    
+    # Check if it's a series (has episode files)
+    is_series = any('E' in quality for quality in files.keys())
+    
+    if is_series:
+        # For series, show first episode download button
+        episode_files = [quality for quality in files.keys() if quality.startswith('E')]
+        if episode_files:
+            first_episode = sorted(episode_files)[0]  # Get first episode
+            buttons.append([InlineKeyboardButton(f"📥 Download {first_episode}", callback_data=f"download_{movie_id}_{first_episode}")])
+    else:
+        # For movies, show quality buttons in 2 columns
+        qualities = sorted([quality for quality in files.keys() if not quality.startswith('E')])
+        for i in range(0, len(qualities), 2):
+            row = []
+            for j in range(2):
+                if i + j < len(qualities):
+                    quality = qualities[i + j]
+                    row.append(InlineKeyboardButton(f"📥 {quality}", callback_data=f"download_{movie_id}_{quality}"))
+            buttons.append(row)
+    
+    return InlineKeyboardMarkup(buttons)
+
 def format_movie_post(movie_details: dict, channel_username: str) -> str:
     """
     ডেটাবেস থেকে প্রাপ্ত মুভির তথ্য দিয়ে একটি সুন্দর পোস্ট ফরম্যাট করে।
@@ -168,19 +194,15 @@ def format_movie_post(movie_details: dict, channel_username: str) -> str:
                 else:
                     episode_info = f"Available Episodes: Ep{first_ep} to Ep{last_ep}"
                 
-                # Create download link for first episode
+                # Create download button for first episode - use callback data to avoid external link popup
                 first_episode = next((quality for quality in files.keys() if quality.startswith('E')), None)
                 if first_episode:
-                    # Use actual download URL instead of bot redirect
-                    actual_download_url = files[first_episode]
-                    download_links = f"👉 <a href='{actual_download_url}'>Click To Download</a> 📥"
+                    download_links = f"📥 Download Link: Available via button below"
     else:
-        # সিঙ্গেল মুভির জন্য প্রতিটি কোয়ালিটির লিঙ্ক
+        # সিঙ্গেল মুভির জন্য প্রতিটি কোয়ালিটির বাটন তথ্য
         qualities = sorted([quality for quality in files.keys() if not quality.startswith('E')])
-        for quality in qualities:
-            # Use actual download URL instead of bot redirect
-            actual_download_url = files[quality]
-            download_links += f"{quality} || 👉 <a href='{actual_download_url}'>Click To Download</a> 📥\n"
+        if qualities:
+            download_links = "📥 Download Links: Available via buttons below"
 
     # Build dynamic template - only include non-N/A fields
     title = movie_details.get('title', 'Unknown')
