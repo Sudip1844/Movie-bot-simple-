@@ -800,7 +800,8 @@ request_movie_conv = ConversationHandler(
     fallbacks=[
         CommandHandler('cancel', cancel_movie_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_movie_conversation)
-    ]
+    ],
+    per_message=True
 )
 
 remove_movie_conv = ConversationHandler(
@@ -817,7 +818,8 @@ remove_movie_conv = ConversationHandler(
     fallbacks=[
         CommandHandler('cancel', cancel_movie_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_movie_conversation)
-    ]
+    ],
+    per_message=True
 )
 
 show_stats_conv = ConversationHandler(
@@ -846,7 +848,8 @@ show_stats_conv = ConversationHandler(
     fallbacks=[
         CommandHandler('cancel', cancel_movie_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_movie_conversation)
-    ]
+    ],
+    per_message=True
 )
 
 # Main handler list to be imported

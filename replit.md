@@ -45,6 +45,7 @@ The application adopts a modular architecture, promoting separation of concerns 
 - **Automated Posting**: After preview, movies can be posted to multiple selected channels with validation checks.
 - **Message Cleanup**: A two-tier automatic chat cleanup system with step-by-step conversation cleanup during workflows and a 24-hour scheduled deletion for user/admin/owner messages. Movie posts are preserved for regular users.
 - **UI/UX Improvements**: Enhanced skip button behavior for category selection (similar to language selection), consolidated step messages to reduce duplication, improved navigation control for request pagination (hides buttons when 5 or fewer requests), and dynamic cancel button behavior for channel selection.
+- **Command Box Stability**: Fixed conversation handler command box disable issues by adding per_message=True to all ConversationHandlers and implementing proper keyboard restoration after movie addition completion. Enhanced restore_main_keyboard function to handle callback queries properly.
 
 ## External Dependencies
 - `python-telegram-bot`: Primary library for Telegram Bot API interaction.

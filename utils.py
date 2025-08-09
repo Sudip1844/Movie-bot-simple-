@@ -327,7 +327,16 @@ async def restore_main_keyboard(update: Update, context, user_role: str):
     """Restore main keyboard and commands when conversation ends."""
     keyboard = context.user_data.get('original_keyboard', get_main_keyboard(user_role))
     
-    # Restore default commands
-    await restore_default_commands(update, context)
+    # Get chat_id from either update.effective_chat or callback query
+    if hasattr(update, 'callback_query') and update.callback_query:
+        chat_id = update.callback_query.message.chat_id
+    elif hasattr(update, 'effective_chat') and update.effective_chat:
+        chat_id = update.effective_chat.id
+    else:
+        chat_id = update.message.chat_id if update.message else None
+    
+    # Restore default commands if we have a valid chat_id
+    if chat_id:
+        await restore_default_commands(context, chat_id)
     
     return keyboard

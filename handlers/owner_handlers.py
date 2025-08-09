@@ -530,7 +530,8 @@ add_admin_conv = ConversationHandler(
     fallbacks=[
         CommandHandler('cancel', cancel_admin_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_admin_conversation)
-    ]
+    ],
+    per_message=True
 )
 
 remove_admin_conv = ConversationHandler(
@@ -547,7 +548,8 @@ remove_admin_conv = ConversationHandler(
     fallbacks=[
         CommandHandler('cancel', cancel_admin_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_admin_conversation)
-    ]
+    ],
+    per_message=True
 )
 
 add_channel_conv = ConversationHandler(
@@ -562,7 +564,8 @@ add_channel_conv = ConversationHandler(
     fallbacks=[
         CommandHandler('cancel', cancel_channel_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_channel_conversation)
-    ]
+    ],
+    per_message=True
 )
 
 remove_channel_conv = ConversationHandler(
@@ -579,7 +582,8 @@ remove_channel_conv = ConversationHandler(
     fallbacks=[
         CommandHandler('cancel', cancel_channel_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_channel_conversation)
-    ]
+    ],
+    per_message=True
 )
 
 

@@ -538,12 +538,28 @@ async def select_channels(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 except Exception as e:
                     logger.error(f"Failed to post to channel {channel_id}: {e}")
 
+        # Restore main keyboard after successful movie addition
+        from utils import restore_main_keyboard
+        import database as db
+        
+        user_role = db.get_user_role(query.from_user.id)
+        keyboard = await restore_main_keyboard(query, context, user_role)
+        
         await query.edit_message_text(f"✅ Movie added successfully! Movie ID: {movie_id}")
+        await query.message.reply_text("Ready for next command!", reply_markup=keyboard)
         context.user_data.clear()
         return ConversationHandler.END
 
     elif query.data == "cancel_post":
+        # Restore main keyboard after cancellation
+        from utils import restore_main_keyboard
+        import database as db
+        
+        user_role = db.get_user_role(query.from_user.id)
+        keyboard = await restore_main_keyboard(query, context, user_role)
+        
         await query.edit_message_text("❌ Movie posting cancelled.")
+        await query.message.reply_text("Ready for next command!", reply_markup=keyboard)
         context.user_data.clear()
         return ConversationHandler.END
 
@@ -609,5 +625,6 @@ add_movie_conv_handler = ConversationHandler(
         CommandHandler('cancel', cancel_conversation),
         MessageHandler(filters.Regex("^❌ Cancel$"), cancel_conversation)
     ],
-    conversation_timeout=CONVERSATION_TIMEOUT
+    conversation_timeout=CONVERSATION_TIMEOUT,
+    per_message=True
 )
